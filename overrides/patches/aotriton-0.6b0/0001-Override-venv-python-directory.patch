@@ -1,0 +1,91 @@
+From ba293cdca5de7495260a501027dc7e51434df6e9 Mon Sep 17 00:00:00 2001
+From: Joseph Groenenboom <jgroenen@redhat.com>
+Date: Mon, 30 Sep 2024 10:43:35 -0400
+Subject: [PATCH 1/1] Override venv python directory.
+
+Remove use of venv to make use of our own consolodated build and complier hosting.
+
+---
+ CMakeLists.txt       |  6 +++---
+ v2src/CMakeLists.txt | 10 +++++-----
+ 2 files changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 4d93610..81f1ec2 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -74,11 +74,11 @@ message("VENV_DIR ${VENV_DIR}")
+ # unset(Python3_EXECUTABLE)
+ # find_package(Python3 COMPONENTS Interpreter REQUIRED)
+ 
+-execute_process(COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} "${VENV_DIR}/bin/python" -c "import site; print(site.getsitepackages()[0], end='')" OUTPUT_VARIABLE VENV_SITE)
++execute_process(COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} PATH="/usr/bin:$ENV{PATH}" python -c "import site; print(site.getsitepackages()[0], end='')" OUTPUT_VARIABLE VENV_SITE)
+ # string(STRIP "${VENV_SITE}" VENV_SITE)
+ message("VENV_SITE ${VENV_SITE}")
+ 
+-execute_process(COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} "${VENV_DIR}/bin/python" -m pip install -r "${CMAKE_CURRENT_LIST_DIR}/requirements.txt")
++execute_process(COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} PATH="/usr/bin:$ENV{PATH}" python -m pip install -r "${CMAKE_CURRENT_LIST_DIR}/requirements.txt")
+ 
+ set(TRITON_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/triton_build")
+ execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory "${TRITON_BUILD_DIR}")
+@@ -87,7 +87,7 @@ set(AOTRITON_TRITON_EGGLINK "${VENV_SITE}/triton.egg-link")
+ message("AOTRITON_TRITON_EGGLINK ${AOTRITON_TRITON_EGGLINK}")
+ 
+ add_custom_command(OUTPUT "${AOTRITON_TRITON_EGGLINK}"
+-  COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} TRITON_BUILD_DIR=${TRITON_BUILD_DIR} "${VENV_DIR}/bin/python" setup.py develop
++  COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} TRITON_BUILD_DIR=${TRITON_BUILD_DIR} PATH="/usr/bin:$ENV{PATH}" python setup.py develop
+   # COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} python -m pip show triton
+   WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/third_party/triton/python/"
+   BYPRODUCTS "${AOTRITON_TRITON_SO}"
+diff --git a/v2src/CMakeLists.txt b/v2src/CMakeLists.txt
+index f0d323f..f4753dc 100644
+--- a/v2src/CMakeLists.txt
++++ b/v2src/CMakeLists.txt
+@@ -26,7 +26,7 @@ message("AOTRITON_COMPILER ${AOTRITON_COMPILER}")
+ # add_dependencies(aotriton_v2_gen_compile aotriton_venv_triton)
+ 
+ execute_process(
+-  COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} "${VENV_DIR}/bin/python" -m v2python.generate_compile --target_gpus ${TARGET_GPUS} --build_dir "${AOTRITON_V2_BUILD_DIR}" --bare_mode
++  COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} PATH="/usr/bin:$ENV{PATH}" python -m v2python.generate_compile --target_gpus ${TARGET_GPUS} --build_dir "${AOTRITON_V2_BUILD_DIR}" --bare_mode
+   COMMAND_ECHO STDOUT
+   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_PARENT_DIR}"
+ )
+@@ -45,7 +45,7 @@ foreach(RULE IN LISTS HSACO_RULES)
+   list(POP_FRONT RULE SIG)
+   if(AOTRITON_COMPRESS_KERNEL)
+     add_custom_command(OUTPUT "${HSACO}.zst"
+-      COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} "${VENV_DIR}/bin/python"
++      COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} PATH="/usr/bin:$ENV{PATH}" python
+       "${AOTRITON_COMPILER}"
+       "${SRC}"
+       "--kernel_name" "${KNAME}"
+@@ -62,7 +62,7 @@ foreach(RULE IN LISTS HSACO_RULES)
+     list(APPEND ALL_HSACOS "${HSACO}.zst")
+   else(AOTRITON_COMPRESS_KERNEL)
+     add_custom_command(OUTPUT "${HSACO}"
+-      COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} "${VENV_DIR}/bin/python"
++      COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} PATH="/usr/bin:$ENV{PATH}" python
+       "${AOTRITON_COMPILER}"
+       "${SRC}"
+       "--kernel_name" "${KNAME}"
+@@ -113,7 +113,7 @@ message(STATUS "AOTRITON_ZSTD_INCLUDE ${AOTRITON_ZSTD_INCLUDE}")
+ message(STATUS "AOTRITON_SHIM_FLAGS ${AOTRITON_SHIM_FLAGS}")
+ 
+ execute_process(
+-  COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} "${VENV_DIR}/bin/python" -m v2python.generate_shim --target_gpus ${TARGET_GPUS} --build_dir ${AOTRITON_V2_BUILD_DIR} --bare_mode
++  COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} PATH="/usr/bin:$ENV{PATH}" python -m v2python.generate_shim --target_gpus ${TARGET_GPUS} --build_dir ${AOTRITON_V2_BUILD_DIR} --bare_mode
+   COMMAND_ECHO STDOUT
+   WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/.."
+ )
+@@ -122,7 +122,7 @@ file(STRINGS "${AOTRITON_V2_BUILD_DIR}/Bare.shim" SHIM_CC_FILES)
+ # CAVEAT: Actual shim code can only be generated during build phase because it
+ # requires some kernel information. (Notably shared memory requirement)
+ add_custom_target(aotriton_v2_gen_shim 
+-  COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} "${VENV_DIR}/bin/python" -m v2python.generate_shim --target_gpus ${TARGET_GPUS} --build_dir ${AOTRITON_V2_BUILD_DIR} ${AOTRITON_SHIM_FLAGS}
++  COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} PATH="/usr/bin:$ENV{PATH}" python -m v2python.generate_shim --target_gpus ${TARGET_GPUS} --build_dir ${AOTRITON_V2_BUILD_DIR} ${AOTRITON_SHIM_FLAGS}
+   BYPRODUCTS ${SHIM_CC_FILES}  # Essential, otherwise add_library complains
+   COMMAND_EXPAND_LISTS
+   WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/.."
+-- 
+2.43.5
+

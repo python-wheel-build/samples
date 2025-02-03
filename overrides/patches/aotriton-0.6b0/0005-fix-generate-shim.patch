@@ -1,0 +1,12 @@
+diff -urNp aotriton-0.6b0.orig/v2python/generate_shim.py aotriton-0.6b0/v2python/generate_shim.py
+--- aotriton-0.6b0.orig/v2python/generate_shim.py	2024-10-30 14:54:40.662345216 -0400
++++ aotriton-0.6b0/v2python/generate_shim.py	2024-10-30 15:06:08.669372413 -0400
+@@ -223,7 +223,7 @@ class ShimMakefileGenerator(MakefileGene
+                 print('\t', '${AR} -r ', fn, '@ar.txt', file=f)
+                 print(all_object_files, file=self._arf)
+             if s == '.so':
+-                print('\t', COMPILER, ' -g -shared -fPIC -o ', fn, all_object_files, file=f)
++                print('\t', COMPILER, ' -g -shared -fPIC -o ', fn, ' @ar.txt', file=f)
+             print('\n\n', file=f)
+ 
+     '''

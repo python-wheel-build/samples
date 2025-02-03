@@ -1,0 +1,32 @@
+From 80448bc5f9f2713f7b16e5dd70869e468b9078fe Mon Sep 17 00:00:00 2001
+From: Liam Keegan <liam@keegan.ch>
+Date: Thu, 17 Feb 2022 14:52:23 +0100
+Subject: [PATCH] fix run-time warnings when using llvm 15
+
+- uwtable now takes a tablekind attribute
+- see https://github.com/llvm/llvm-project/commit/6398903ac8c141820a84f3063b7956abe1742500
+- resolves #1943
+- also bump github actions checkout & cache versions in CI
+---
+ symengine/llvm_double.cpp            | 5 +++++
+ 4 files changed, 11 insertions(+), 6 deletions(-)
+
+diff --git a/libsymengine/symengine/llvm_double.cpp b/libsymengine/symengine/llvm_double.cpp
+index b88414c81..a4e71901a 100644
+--- a/libsymengine/symengine/llvm_double.cpp
++++ b/libsymengine/symengine/llvm_double.cpp
+@@ -130,7 +130,12 @@ llvm::Function *LLVMVisitor::get_function_type(llvm::LLVMContext *context)
+     F->addParamAttr(0, llvm::Attribute::NoCapture);
+     F->addParamAttr(1, llvm::Attribute::NoCapture);
+     F->addFnAttr(llvm::Attribute::NoUnwind);
++#if (LLVM_VERSION_MAJOR < 15)
+     F->addFnAttr(llvm::Attribute::UWTable);
++#else
++    F->addFnAttr(llvm::Attribute::getWithUWTableKind(
++        *context, llvm::UWTableKind::Default));
++#endif
+ #endif
+     return F;
+ }
+-- 
+2.47.0

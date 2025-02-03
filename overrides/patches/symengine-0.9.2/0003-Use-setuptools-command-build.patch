@@ -1,0 +1,40 @@
+From eba314ac0e29de79554ac5f3717730169dbbb5bc Mon Sep 17 00:00:00 2001
+From: Isuru Fernando <isuruf@gmail.com>
+Date: Mon, 20 Mar 2023 16:30:02 -0500
+Subject: [PATCH] Use setuptools.command.build if available
+
+---
+ setup.py | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/setup.py b/setup.py
+index 6242769d..88f2d1c7 100644
+--- a/setup.py
++++ b/setup.py
+@@ -22,8 +22,6 @@
+         print("Value {} for USE_DISTUTILS treated as False".
+               format(use_distutils))
+ 
+-from distutils.command.build import build as _build
+-
+ if use_setuptools:
+     try:
+         from setuptools import setup
+@@ -31,11 +29,17 @@
+         from setuptools.command.build_ext import build_ext as _build_ext
+     except ImportError:
+         use_setuptools = False
++    else:
++        try:
++            from setuptools.command.build import build as _build
++        except ImportError:
++            from distutils.command.build import build as _build
+ 
+ if not use_setuptools:
+     from distutils.core import setup
+     from distutils.command.install import install as _install
+     from distutils.command.build_ext import build_ext as _build_ext
++    from distutils.command.build import build as _build
+ 
+ cmake_opts = [("PYTHON_BIN", sys.executable),
+               ("CMAKE_INSTALL_RPATH_USE_LINK_PATH", "yes")]

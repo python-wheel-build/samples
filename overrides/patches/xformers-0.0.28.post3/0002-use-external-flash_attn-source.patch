@@ -1,0 +1,70 @@
+diff --git a/setup.py b/setup.py
+--- a/setup.py
++++ b/setup.py
+@@ -218,6 +218,10 @@
+ 
+     flash_root = os.path.join(this_dir, "third_party", "flash-attention")
+     cutlass_inc = os.path.join(flash_root, "csrc", "cutlass", "include")
++    # Allow overriding flash_attn source dir with environement variable
++    flash_external_root = os.environ.get('FLASH_ATTENTION_SOURCE_DIR', '')
++    if flash_external_root != '':
++        flash_root = flash_external_root
+     if not os.path.exists(flash_root) or not os.path.exists(cutlass_inc):
+         raise RuntimeError(
+             "flashattention submodule not found. Did you forget "
+@@ -258,7 +262,7 @@
+                 for p in [
+                     Path(flash_root) / "csrc" / "flash_attn",
+                     Path(flash_root) / "csrc" / "flash_attn" / "src",
+-                    Path(flash_root) / "csrc" / "cutlass" / "include",
++                    Path(cutlass_inc),
+                 ]
+             ],
+         )
+@@ -304,6 +308,10 @@
+ 
+     flash_root = os.path.join(this_dir, "third_party", "flash-attention")
+     cutlass_inc = os.path.join(flash_root, "csrc", "cutlass", "include")
++    # Allow overriding flash_attn source dir with environement variable
++    flash_external_root = os.environ.get('FLASH_ATTENTION_SOURCE_DIR', '')
++    if flash_external_root != '':
++        flash_root = flash_external_root
+     if not os.path.exists(flash_root) or not os.path.exists(cutlass_inc):
+         raise RuntimeError(
+             "flashattention submodule not found. Did you forget "
+@@ -352,7 +360,7 @@
+             include_dirs=[
+                 p.absolute()
+                 for p in [
+-                    Path(flash_root) / "csrc" / "cutlass" / "include",
++                    Path(cutlass_inc),
+                     Path(flash_root) / "hopper",
+                 ]
+             ],
+@@ -671,11 +679,21 @@
+     # parameter in `setuptools.setup`, but this does not work when
+     # developing in editable mode
+     # See: https://github.com/pypa/pip/issues/3160 (closed, but not fixed)
+-    symlink_package(
+-        "xformers._flash_attn",
+-        Path("third_party") / "flash-attention" / "flash_attn",
+-        is_building_wheel,
+-    )
++    #
++    # Allow overriding flash_attn source dir with environement variable
++    flash_external_root = os.environ.get('FLASH_ATTENTION_SOURCE_DIR', '')
++    if flash_external_root != '':
++        symlink_package(
++            "xformers._flash_attn",
++            Path(flash_external_root) / "flash_attn",
++            is_building_wheel,
++        )
++    else:
++        symlink_package(
++            "xformers._flash_attn",
++            Path("third_party") / "flash-attention" / "flash_attn",
++            is_building_wheel,
++        )
+     extensions, extensions_metadata = get_extensions()
+     setuptools.setup(
+         name="xformers",

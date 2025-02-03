@@ -1,0 +1,10 @@
+diff --git a/requirements-rocm.txt b/requirements-rocm.txt
+--- a/requirements-rocm.txt
++++ b/requirements-rocm.txt
+@@ -8,5 +8,6 @@
+ peft
+ pytest-asyncio
+ tensorizer>=2.9.0
++flash_attn
+ triton
+ setuptools-scm>=8

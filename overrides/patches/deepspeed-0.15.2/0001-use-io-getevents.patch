@@ -1,0 +1,49 @@
+Revert use of io_pgetevents
+
+io_pgetevent with NULL as sigmask behaves exactly like io_getevents.
+
+Revert feature check back to io_submit.
+
+diff --git a/csrc/aio/common/deepspeed_aio_common.cpp b/csrc/aio/common/deepspeed_aio_common.cpp
+index a65cc500..e1b184e3 100644
+--- a/csrc/aio/common/deepspeed_aio_common.cpp
++++ b/csrc/aio/common/deepspeed_aio_common.cpp
+@@ -115,11 +115,10 @@ static int _do_io_complete(const long long int min_completes,
+                            std::vector<std::chrono::duration<double>>& reap_times)
+ {
+     const auto start_time = std::chrono::high_resolution_clock::now();
+-    long long int n_completes = io_pgetevents(aio_ctxt->_io_ctxt,
++    long long int n_completes = io_getevents(aio_ctxt->_io_ctxt,
+                                               min_completes,
+                                               max_completes,
+                                               aio_ctxt->_io_events.data(),
+-                                              nullptr,
+                                               nullptr);
+     reap_times.push_back(std::chrono::high_resolution_clock::now() - start_time);
+     assert(n_completes >= min_completes);
+diff --git a/op_builder/npu/async_io.py b/op_builder/npu/async_io.py
+index 76d495b8..fa43312a 100644
+--- a/op_builder/npu/async_io.py
++++ b/op_builder/npu/async_io.py
+@@ -89,7 +89,7 @@ class AsyncIOBuilder(NPUOpBuilder):
+         # which is a function provided by libaio that is used in the async_io op.
+         # If needed, one can define -I and -L entries in CFLAGS and LDFLAGS
+         # respectively to specify the directories for libaio.h and libaio.so.
+-        aio_compatible = self.has_function('io_pgetevents', ('aio', ))
++        aio_compatible = self.has_function('io_submit', ('aio', ))
+         if verbose and not aio_compatible:
+             self.warning(f"{self.NAME} requires the dev libaio .so object and headers but these were not found.")
+ 
+diff --git a/op_builder/xpu/async_io.py b/op_builder/xpu/async_io.py
+index 2da963ae..c5dde549 100644
+--- a/op_builder/xpu/async_io.py
++++ b/op_builder/xpu/async_io.py
+@@ -92,7 +92,7 @@ class AsyncIOBuilder(OpBuilder):
+         # which is a function provided by libaio that is used in the async_io op.
+         # If needed, one can define -I and -L entries in CFLAGS and LDFLAGS
+         # respectively to specify the directories for libaio.h and libaio.so.
+-        aio_compatible = self.has_function('io_pgetevents', ('aio', ))
++        aio_compatible = self.has_function('io_submit', ('aio', ))
+         if verbose and not aio_compatible:
+             self.warning(f"{self.NAME} requires the dev libaio .so object and headers but these were not found.")
+ 

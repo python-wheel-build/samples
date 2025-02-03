@@ -1,0 +1,283 @@
+From bbea0f4035a2bbc1be821549fb15e81fb36ec623 Mon Sep 17 00:00:00 2001
+From: Liam Keegan <liam@keegan.ch>
+Date: Sun, 21 Mar 2021 15:11:00 +0100
+Subject: [PATCH] use new llvm pass manager instead of legacy pass manager
+
+- use PassBuilder default -Ox passes instead of manually specifying passes
+- remove LLVMVisitor::init() overloads with explicit list of passes
+- add `passes` to SYMENGINE_LLVM_COMPONENTS in CMakeLists
+- increase minimum required llvm version to 4.0
+- remove llvm from USE_GLIBCXX_DEBUG ci job
+  - using debug libstdc++ changes the ABI: https://gcc.gnu.org/onlinedocs/libstdc++/manual/debug_mode_using.html
+  - but llvm library is not compiled against debug libstdc++
+  - vector is passed between debug and non-debug translation units -> crash
+---
+  CMakeLists.txt                              |   4 +-
+ symengine/llvm_double.cpp                   | 126 +++++++-------------
+ symengine/llvm_double.h                     |  13 +-
+ symengine/tests/eval/test_lambda_double.cpp |   3 +-
+ 6 files changed, 47 insertions(+), 103 deletions(-)
+
+ddiff --git a/CMakeLists.txt b/CMakeLists.txt
+index 27b0f9af9..220afc8c2 100644
+--- a/libsymengine/CMakeLists.txt
++++ b/libsymengine/CMakeLists.txt
+@@ -399,9 +399,9 @@ set(WITH_LLVM no
+     CACHE BOOL "Build with LLVM")
+ 
+ if (WITH_LLVM)
+-    set(SYMENGINE_LLVM_COMPONENTS asmparser core executionengine instcombine mcjit native nativecodegen scalaropts vectorize support transformutils)
++    set(SYMENGINE_LLVM_COMPONENTS asmparser core executionengine instcombine mcjit native nativecodegen scalaropts vectorize support transformutils passes)
+     find_package(LLVM REQUIRED ${SYMENGINE_LLVM_COMPONENTS})
+-    set(LLVM_MINIMUM_REQUIRED_VERSION "3.8")
++    set(LLVM_MINIMUM_REQUIRED_VERSION "4.0")
+     if (LLVM_PACKAGE_VERSION LESS ${LLVM_MINIMUM_REQUIRED_VERSION})
+ 	    message(FATAL_ERROR "LLVM version found ${LLVM_PACKAGE_VERSION} is too old.
+                              Require at least ${LLVM_MINIMUM_REQUIRED_VERSION}")
+diff --git a/libsymengine/symengine/llvm_double.cpp b/libsymengine/symengine/llvm_double.cpp
+index d6f5a41fe..4911b4c78 100644
+--- a/libsymengine/symengine/llvm_double.cpp
++++ b/libsymengine/symengine/llvm_double.cpp
+@@ -1,8 +1,8 @@
+ #include "llvm/ADT/STLExtras.h"
+-#include "llvm/Analysis/Passes.h"
+ #include "llvm/ExecutionEngine/ExecutionEngine.h"
+ #include "llvm/ExecutionEngine/GenericValue.h"
+ #include "llvm/ExecutionEngine/MCJIT.h"
++#include "llvm/Passes/PassBuilder.h"
+ #include "llvm/IR/Argument.h"
+ #include "llvm/IR/Attributes.h"
+ #include "llvm/IR/BasicBlock.h"
+@@ -12,7 +12,7 @@
+ #include "llvm/IR/IRBuilder.h"
+ #include "llvm/IR/Instructions.h"
+ #include "llvm/IR/Intrinsics.h"
+-#include "llvm/IR/LegacyPassManager.h"
++#include "llvm/Analysis/Passes.h"
+ #include "llvm/IR/LLVMContext.h"
+ #include "llvm/IR/Module.h"
+ #include "llvm/IR/Type.h"
+@@ -25,8 +25,6 @@
+ #include "llvm/IR/Verifier.h"
+ #include "llvm/Support/TargetSelect.h"
+ #include "llvm/Target/TargetMachine.h"
+-#include "llvm/Transforms/Scalar.h"
+-#include "llvm/Transforms/Vectorize.h"
+ #include "llvm/ExecutionEngine/ObjectCache.h"
+ #include "llvm/Support/FileSystem.h"
+ #include "llvm/Support/Path.h"
+@@ -36,17 +34,6 @@
+ #include <vector>
+ #include <fstream>
+ 
+-#if (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9)                       \
+-    || (LLVM_VERSION_MAJOR > 3)
+-#include <llvm/Transforms/Scalar/GVN.h>
+-#endif
+-
+-#if (LLVM_VERSION_MAJOR >= 7)
+-#include <llvm/Transforms/InstCombine/InstCombine.h>
+-#include <llvm/Transforms/Scalar/InstSimplifyPass.h>
+-#include <llvm/Transforms/Utils.h>
+-#endif
+-
+ #include <symengine/llvm_double.h>
+ #include <symengine/eval_double.h>
+ #include <symengine/eval.h>
+@@ -73,15 +60,7 @@ llvm::Value *LLVMVisitor::apply(const Basic &b)
+ void LLVMVisitor::init(const vec_basic &x, const Basic &b, bool symbolic_cse,
+                        unsigned opt_level)
+ {
+-    init(x, b, symbolic_cse, LLVMVisitor::create_default_passes(opt_level),
+-         opt_level);
+-}
+-
+-void LLVMVisitor::init(const vec_basic &x, const Basic &b, bool symbolic_cse,
+-                       const std::vector<llvm::Pass *> &passes,
+-                       unsigned opt_level)
+-{
+-    init(x, {b.rcp_from_this()}, symbolic_cse, passes, opt_level);
++    init(x, {b.rcp_from_this()}, symbolic_cse, opt_level);
+ }
+ 
+ llvm::Function *LLVMVisitor::get_function_type(llvm::LLVMContext *context)
+@@ -140,58 +119,8 @@ llvm::Function *LLVMVisitor::get_function_type(llvm::LLVMContext *context)
+     return F;
+ }
+ 
+-std::vector<llvm::Pass *> LLVMVisitor::create_default_passes(int optlevel)
+-{
+-    std::vector<llvm::Pass *> passes;
+-    if (optlevel == 0) {
+-        return passes;
+-    }
+-#if (LLVM_VERSION_MAJOR < 4)
+-    passes.push_back(llvm::createInstructionCombiningPass());
+-#else
+-    passes.push_back(llvm::createInstructionCombiningPass(optlevel > 1));
+-#endif
+-    passes.push_back(llvm::createDeadCodeEliminationPass());
+-    passes.push_back(llvm::createPromoteMemoryToRegisterPass());
+-    passes.push_back(llvm::createReassociatePass());
+-    passes.push_back(llvm::createGVNPass());
+-    passes.push_back(llvm::createCFGSimplificationPass());
+-    passes.push_back(llvm::createPartiallyInlineLibCallsPass());
+-#if (LLVM_VERSION_MAJOR < 5)
+-    passes.push_back(llvm::createLoadCombinePass());
+-#endif
+-#if LLVM_VERSION_MAJOR >= 7
+-    passes.push_back(llvm::createInstSimplifyLegacyPass());
+-#else
+-    passes.push_back(llvm::createInstructionSimplifierPass());
+-#endif
+-    passes.push_back(llvm::createMemCpyOptPass());
+-    passes.push_back(llvm::createSROAPass());
+-    passes.push_back(llvm::createMergedLoadStoreMotionPass());
+-    passes.push_back(llvm::createBitTrackingDCEPass());
+-    passes.push_back(llvm::createAggressiveDCEPass());
+-    if (optlevel > 2) {
+-        passes.push_back(llvm::createSLPVectorizerPass());
+-#if LLVM_VERSION_MAJOR >= 7
+-        passes.push_back(llvm::createInstSimplifyLegacyPass());
+-#else
+-        passes.push_back(llvm::createInstructionSimplifierPass());
+-#endif
+-    }
+-    return passes;
+-}
+-
+ void LLVMVisitor::init(const vec_basic &inputs, const vec_basic &outputs,
+                        const bool symbolic_cse, unsigned opt_level)
+-{
+-    init(inputs, outputs, symbolic_cse,
+-         LLVMVisitor::create_default_passes(opt_level), opt_level);
+-}
+-
+-void LLVMVisitor::init(const vec_basic &inputs, const vec_basic &outputs,
+-                       const bool symbolic_cse,
+-                       const std::vector<llvm::Pass *> &passes,
+-                       unsigned opt_level)
+ {
+     executionengine.reset();
+     llvm::InitializeNativeTarget();
+@@ -206,13 +135,6 @@ void LLVMVisitor::init(const vec_basic &inputs, const vec_basic &outputs,
+     module->setDataLayout("");
+     mod = module.get();
+ 
+-    // Create a new pass manager attached to it.
+-    fpm = std::make_shared<llvm::legacy::FunctionPassManager>(mod);
+-    for (auto pass : passes) {
+-        fpm->add(pass);
+-    }
+-    fpm->doInitialization();
+-
+     auto F = get_function_type(context.get());
+ 
+     // Add a basic block to the function. As before, it automatically
+@@ -294,11 +216,47 @@ void LLVMVisitor::init(const vec_basic &inputs, const vec_basic &outputs,
+     //     module->print(llvm::errs(), nullptr);
+     // #endif
+ 
+-    // Optimize the function.
+-    fpm->run(*F);
++    // module->print(llvm::errs(), nullptr);
++
++    // Optimize the function using default passes from PassBuilder
++    // FunctionSimplificationPipeline for the opt_level
++#if (LLVM_VERSION_MAJOR < 14)
++    using OptimizationLevel = llvm::PassBuilder::OptimizationLevel;
++#else
++    using OptimizationLevel = llvm::OptimizationLevel;
++#endif
++    llvm::PassBuilder PB;
++    llvm::ModuleAnalysisManager MAM;
++    llvm::CGSCCAnalysisManager CGAM;
++    llvm::FunctionAnalysisManager FAM;
++    llvm::LoopAnalysisManager LAM;
++    PB.registerModuleAnalyses(MAM);
++    PB.registerCGSCCAnalyses(CGAM);
++    PB.registerFunctionAnalyses(FAM);
++    PB.registerLoopAnalyses(LAM);
++    PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
++    llvm::FunctionPassManager FPM;
++    OptimizationLevel pb_opt_level{OptimizationLevel::O3};
++    if (opt_level == 0) {
++        pb_opt_level = OptimizationLevel::O0;
++    } else if (opt_level == 1) {
++        pb_opt_level = OptimizationLevel::O1;
++    } else if (opt_level == 2) {
++        pb_opt_level = OptimizationLevel::O2;
++    }
++#if (LLVM_VERSION_MAJOR < 6)
++    FPM = PB.buildFunctionSimplificationPipeline(pb_opt_level);
++#elif (LLVM_VERSION_MAJOR < 12)
++    FPM = PB.buildFunctionSimplificationPipeline(
++        pb_opt_level, llvm::PassBuilder::ThinLTOPhase::None);
++#else
++    FPM = PB.buildFunctionSimplificationPipeline(
++        pb_opt_level, llvm::ThinOrFullLTOPhase::None);
++#endif
++    FPM.run(*F, FAM);
+ 
+     // std::cout << "Optimized LLVM IR" << std::endl;
+-    // module->dump();
++    // module->print(llvm::errs(), nullptr);
+ 
+     // Now we create the JIT.
+     std::string error;
+diff --git a/libsymengine/symengine/llvm_double.h b/libsymengine/symengine/llvm_double.h
+index 6ce4b9e57..9d64ebf8e 100644
+--- a/libsymengine/symengine/llvm_double.h
++++ b/libsymengine/symengine/llvm_double.h
+@@ -18,10 +18,6 @@ class ExecutionEngine;
+ class MemoryBufferRef;
+ class LLVMContext;
+ class Pass;
+-namespace legacy
+-{
+-class FunctionPassManager;
+-}
+ } // namespace llvm
+ 
+ namespace SymEngine
+@@ -39,7 +35,7 @@ protected:
+     llvm::Value *result_;
+     std::shared_ptr<llvm::LLVMContext> context;
+     std::shared_ptr<llvm::ExecutionEngine> executionengine;
+-    std::shared_ptr<llvm::legacy::FunctionPassManager> fpm;
++
+     intptr_t func;
+ 
+     // Following are invalid after the init call.
+@@ -53,15 +49,8 @@ public:
+     llvm::Value *apply(const Basic &b);
+     void init(const vec_basic &x, const Basic &b,
+               const bool symbolic_cse = false, unsigned opt_level = 3);
+-    void init(const vec_basic &x, const Basic &b, const bool symbolic_cse,
+-              const std::vector<llvm::Pass *> &passes, unsigned opt_level = 3);
+     void init(const vec_basic &inputs, const vec_basic &outputs,
+               const bool symbolic_cse = false, unsigned opt_level = 3);
+-    void init(const vec_basic &inputs, const vec_basic &outputs,
+-              const bool symbolic_cse, const std::vector<llvm::Pass *> &passes,
+-              unsigned opt_level = 3);
+-
+-    static std::vector<llvm::Pass *> create_default_passes(int optlevel);
+ 
+     // Helper functions
+     void set_double(double d);
+diff --git a/libsymengine/symengine/tests/eval/test_lambda_double.cpp b/libsymengine/symengine/tests/eval/test_lambda_double.cpp
+index 4389169a4..ae64e6dd4 100644
+--- a/libsymengine/symengine/tests/eval/test_lambda_double.cpp
++++ b/libsymengine/symengine/tests/eval/test_lambda_double.cpp
+@@ -520,8 +520,7 @@ TEST_CASE("Check that our default LLVM passes give correct results",
+     v.init({x, y, z}, *r);
+     LLVMDoubleVisitor v2;
+     for (int opt_level = 0; opt_level < 4; ++opt_level) {
+-        v2.init({x, y, z}, *r, false,
+-                LLVMDoubleVisitor::create_default_passes(opt_level), opt_level);
++        v2.init({x, y, z}, *r, false, opt_level);
+         d = v.call({0.4, 2.0, 3.0});
+         d2 = v2.call({0.4, 2.0, 3.0});
+         // Check for 12 digits with doubles
+-- 
+2.47.0

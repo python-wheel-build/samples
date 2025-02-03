@@ -1,0 +1,24 @@
+From a04f82fbca7004c90ad94ec4cd9e5f55e9b42cff Mon Sep 17 00:00:00 2001
+From: Joseph Groenenboom <jgroenen@redhat.com>
+Date: Mon, 14 Oct 2024 15:53:02 -0400
+Subject: [PATCH 5/5] Remove CMake check to keep PyTorch from building it
+
+---
+ pyproject.toml | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/pyproject.toml b/pyproject.toml
+index 07d42be8ad..6342d97c88 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -6,7 +6,6 @@ requires = [
+     "numpy",
+     "ninja",
+     "pyyaml",
+-    "cmake",
+     "typing-extensions",
+     "requests",
+     "filelock",
+-- 
+2.43.5
+

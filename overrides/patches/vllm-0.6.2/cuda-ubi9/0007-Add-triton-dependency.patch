@@ -1,0 +1,19 @@
+diff --git a/requirements-cuda.txt b/requirements-cuda.txt
+--- a/requirements-cuda.txt
++++ b/requirements-cuda.txt
+@@ -5,6 +5,7 @@
+ ray >= 2.9
+ nvidia-ml-py # for pynvml package
+ torch == 2.4.1
++triton
+ # These must be updated alongside torch
+ torchvision == 0.19   # Required for phi3v processor. See https://github.com/pytorch/vision?tab=readme-ov-file#installation for corresponding version
+ xformers == 0.0.27.post2; platform_system == 'Linux' and platform_machine == 'x86_64'  # Requires PyTorch 2.4.0
+diff --git a/requirements-rocm.txt b/requirements-rocm.txt
+--- a/requirements-rocm.txt
++++ b/requirements-rocm.txt
+@@ -8,3 +8,4 @@
+ peft
+ pytest-asyncio
+ tensorizer>=2.9.0
++triton

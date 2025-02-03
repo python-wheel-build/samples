@@ -1,0 +1,36 @@
+From a60c927970e169b9f29bcbfb2a984ae2a1ce4ad7 Mon Sep 17 00:00:00 2001
+From: Joseph Groenenboom <jgroenen@redhat.com>
+Date: Mon, 14 Oct 2024 23:57:34 -0400
+Subject: [PATCH 1/4] Do not build CMake
+
+CMake is already in the build image.  Find out a way to get around this triggering.
+---
+ pyproject.toml         | 1 -
+ requirements-build.txt | 1 -
+ 2 files changed, 2 deletions(-)
+
+diff --git a/pyproject.toml b/pyproject.toml
+index be049e6d..a6b3026e 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,7 +1,6 @@
+ [build-system]
+ # Should be mirrored in requirements-build.txt
+ requires = [
+-    "cmake>=3.26",
+     "ninja",
+     "packaging",
+     "setuptools>=61",
+diff --git a/requirements-build.txt b/requirements-build.txt
+index 6144a56d..75e5fde3 100644
+--- a/requirements-build.txt
++++ b/requirements-build.txt
+@@ -1,5 +1,4 @@
+ # Should be mirrored in pyproject.toml
+-cmake>=3.26
+ ninja
+ packaging
+ setuptools>=61
+-- 
+2.43.5
+

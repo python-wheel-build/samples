@@ -1,0 +1,21 @@
+From 2bf543bed39ac63cd07fa22fe3ead4cc963db4a3 Mon Sep 17 00:00:00 2001
+From: Joseph Groenenboom <jgroenen@redhat.com>
+Date: Fri, 15 Nov 2024 04:22:01 -0500
+Subject: [PATCH 6/6] Add gradlib dependency
+
+---
+ requirements-rocm.txt | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/requirements-rocm.txt b/requirements-rocm.txt
+index cb613264..b62815dd 100644
+--- a/requirements-rocm.txt
++++ b/requirements-rocm.txt
+@@ -9,3 +9,4 @@ peft
+ pytest-asyncio
+ tensorizer>=2.9.0
+ setuptools-scm>=8
++gradlib==0.6.2
+-- 
+2.43.5
+

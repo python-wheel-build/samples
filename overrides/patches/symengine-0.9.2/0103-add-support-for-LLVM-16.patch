@@ -1,0 +1,93 @@
+From 8404c2cc5250d6d52ba831a6e1f6d6a99fcdf496 Mon Sep 17 00:00:00 2001
+From: Liam Keegan <liam@keegan.ch>
+Date: Tue, 14 Mar 2023 20:38:49 +0100
+Subject: [PATCH] add support for LLVM 16
+
+- requires C++17
+- `getBasicBlockList()` is now private but they provide an `insert()` method
+- requires CMake policy `CMP0057` (IN_LIST if() operator)
+---
+ CMakeLists.txt            | 6 +++++-
+ symengine/CMakeLists.txt  | 8 ++++++--
+ symengine/llvm_double.cpp | 8 ++++++++
+ 3 files changed, 19 insertions(+), 3 deletions(-)
+
+diff --git a/libsymengine/CMakeLists.txt b/libsymengine/CMakeLists.txt
+index 7f8c09d5b..27b0f9af9 100644
+--- a/libsymengine/CMakeLists.txt
++++ b/libsymengine/CMakeLists.txt
+@@ -1,5 +1,9 @@
+ cmake_minimum_required(VERSION 2.8.12)
+ 
++if (POLICY CMP0057)
++    cmake_policy(SET CMP0057 NEW) # needed for llvm >= 16
++endif ()
++
+ set(CMAKE_USER_MAKE_RULES_OVERRIDE ${CMAKE_CURRENT_SOURCE_DIR}/cmake/UserOverride.cmake)
+ 
+ project(symengine)
+@@ -432,7 +436,6 @@ if (WITH_LLVM)
+     include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
+     set(HAVE_SYMENGINE_LLVM yes)
+     set(PKGS ${PKGS} "LLVM")
+-    message("LLVM VERSION: ${LLVM_VERSION}")
+ endif()
+ 
+ # BENCHMARKS
+@@ -751,6 +754,7 @@ endif()
+ 
+ message("WITH_LLVM: ${WITH_LLVM}")
+ if (WITH_LLVM)
++    message("LLVM VERSION: ${LLVM_VERSION}")
+     message("LLVM_INCLUDE_DIRS: ${LLVM_INCLUDE_DIRS}")
+ endif()
+ 
+diff --git a/libsymengine/symengine/CMakeLists.txt b/libsymengine/symengine/CMakeLists.txt
+index 4da72a741..ae85096ed 100644
+--- a/libsymengine/symengine/CMakeLists.txt
++++ b/libsymengine/symengine/CMakeLists.txt
+@@ -273,8 +273,12 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+     set_source_files_properties(parser/parser.tab.cc PROPERTIES COMPILE_FLAGS "-Wno-conversion")
+ endif()
+ 
+-if (WITH_LLVM AND NOT ${LLVM_VERSION} VERSION_LESS "10.0.0")
+-    set_target_properties(symengine PROPERTIES CXX_STANDARD 14 CXX_EXTENSIONS OFF CXX_STANDARD_REQUIRED yes)
++if (WITH_LLVM)
++    if (NOT ${LLVM_VERSION} VERSION_LESS "16.0.0")
++        set_target_properties(symengine PROPERTIES CXX_STANDARD 17 CXX_EXTENSIONS OFF CXX_STANDARD_REQUIRED yes)
++    elseif (NOT ${LLVM_VERSION} VERSION_LESS "10.0.0")
++        set_target_properties(symengine PROPERTIES CXX_STANDARD 14 CXX_EXTENSIONS OFF CXX_STANDARD_REQUIRED yes)
++    endif()
+ endif()
+ 
+ if (WITH_SYMENGINE_TEUCHOS)
+diff --git a/libsymengine/symengine/llvm_double.cpp b/libsymengine/symengine/llvm_double.cpp
+index a4e71901a..d6f5a41fe 100644
+--- a/libsymengine/symengine/llvm_double.cpp
++++ b/libsymengine/symengine/llvm_double.cpp
+@@ -632,7 +632,11 @@ void LLVMVisitor::bvisit(const Piecewise &x)
+     then_bb = builder->GetInsertBlock();
+ 
+     // Emit else block.
++#if (LLVM_VERSION_MAJOR < 16)
+     function->getBasicBlockList().push_back(else_bb);
++#else
++    function->insert(function->end(), else_bb);
++#endif
+     builder->SetInsertPoint(else_bb);
+     llvm::Value *else_value = apply(*pw->get_vec().back().first);
+     builder->CreateBr(merge_bb);
+@@ -642,7 +646,11 @@ void LLVMVisitor::bvisit(const Piecewise &x)
+     else_bb = builder->GetInsertBlock();
+ 
+     // Emit merge block.
++#if (LLVM_VERSION_MAJOR < 16)
+     function->getBasicBlockList().push_back(merge_bb);
++#else
++    function->insert(function->end(), merge_bb);
++#endif
+     builder->SetInsertPoint(merge_bb);
+     llvm::PHINode *phi_node
+         = builder->CreatePHI(get_float_type(&mod->getContext()), 2);
+-- 
+2.47.0

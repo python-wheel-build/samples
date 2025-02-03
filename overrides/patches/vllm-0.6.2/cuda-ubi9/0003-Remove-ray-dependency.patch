@@ -1,0 +1,35 @@
+diff --git a/requirements-cuda.txt b/requirements-cuda.txt
+--- a/requirements-cuda.txt
++++ b/requirements-cuda.txt
+@@ -2,7 +2,6 @@
+ -r requirements-common.txt
+ 
+ # Dependencies for NVIDIA GPUs
+-ray >= 2.9
+ nvidia-ml-py # for pynvml package
+ torch == 2.4.1
+ # These must be updated alongside torch
+diff --git a/requirements-rocm.txt b/requirements-rocm.txt
+--- a/requirements-rocm.txt
++++ b/requirements-rocm.txt
+@@ -5,7 +5,6 @@
+ awscli
+ boto3
+ botocore
+-ray >= 2.10.0
+ peft
+ pytest-asyncio
+-tensorizer>=2.9.0
+\ No newline at end of file
++tensorizer>=2.9.0
+diff --git a/requirements-test.txt b/requirements-test.txt
+--- a/requirements-test.txt
++++ b/requirements-test.txt
+@@ -14,7 +14,6 @@
+ opencv-python # required for video test
+ peft
+ requests
+-ray[adag]==2.35
+ sentence-transformers # required for embedding
+ soundfile # required for audio test
+ compressed-tensors==0.4.0 # required for compressed-tensors

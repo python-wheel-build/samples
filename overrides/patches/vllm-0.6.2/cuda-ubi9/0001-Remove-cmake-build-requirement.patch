@@ -1,0 +1,20 @@
+diff --git a/pyproject.toml b/pyproject.toml
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,7 +1,6 @@
+ [build-system]
+ # Should be mirrored in requirements-build.txt
+ requires = [
+-    "cmake>=3.26",
+     "ninja",
+     "packaging",
+     "setuptools>=61",
+diff --git a/requirements-build.txt b/requirements-build.txt
+--- a/requirements-build.txt
++++ b/requirements-build.txt
+@@ -1,5 +1,4 @@
+ # Should be mirrored in pyproject.toml
+-cmake>=3.26
+ ninja
+ packaging
+ setuptools>=61

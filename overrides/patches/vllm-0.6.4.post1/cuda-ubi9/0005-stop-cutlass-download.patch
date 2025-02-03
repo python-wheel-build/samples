@@ -1,0 +1,25 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -217,7 +217,7 @@
+         # So if the GIT_TAG above is updated to a commit hash, GIT_SHALLOW must be set to FALSE
+         GIT_SHALLOW TRUE
+   )
+-  FetchContent_MakeAvailable(cutlass)
++  #FetchContent_MakeAvailable(cutlass)
+ 
+   list(APPEND VLLM_EXT_SRC
+     "csrc/mamba/mamba_ssm/selective_scan_fwd.cu"
+@@ -313,6 +313,12 @@
+   #
+   # Machete kernels
+ 
++  if (DEFINED ENV{CUTLASS_DIR})
++    set(CUTLASS_DIR "$ENV{CUTLASS_DIR}")
++    set(CUTLASS_INCLUDE_DIR "$ENV{CUTLASS_DIR}/include")
++  endif()
++
++
+   # The machete kernels only work on hopper and require CUDA 12.0 or later.
+   # Only build Machete kernels if we are building for something compatible with sm90a
+   cuda_archs_loose_intersection(MACHETE_ARCHS "9.0a" "${CUDA_ARCHS}")

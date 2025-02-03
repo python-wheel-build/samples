@@ -1,0 +1,24 @@
+From a75cee0ef9afc5c4de951db682b8ec985f7d9c7a Mon Sep 17 00:00:00 2001
+From: Joseph Groenenboom <jgroenen@redhat.com>
+Date: Tue, 26 Nov 2024 21:51:38 -0500
+Subject: [PATCH 7/7] Add new AMD dependencies for the vLLM image
+
+amdsmi, flash attention and Triton are required by vLLM and should be listed.
+---
+ requirements-rocm.txt | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/requirements-rocm.txt b/requirements-rocm.txt
+index b62815dd..46353423 100644
+--- a/requirements-rocm.txt
++++ b/requirements-rocm.txt
+@@ -10,3 +10,6 @@ pytest-asyncio
+ tensorizer>=2.9.0
+ setuptools-scm>=8
+ gradlib==0.6.2
++amdsmi
++triton
++flash_attn==2.6.3
+-- 
+2.43.5
+

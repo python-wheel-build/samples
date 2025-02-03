@@ -1,0 +1,116 @@
+From 98e82c2ae46011c9444b4c7061b5a0d537e390a4 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Bj=C3=B6rn=20Ingvar=20Dahlgren?= <bjodah@gmail.com>
+Date: Mon, 21 Feb 2022 20:15:46 +0100
+Subject: [PATCH] Support NaN in LLVM- and Lambda visitors
+
+---
+ symengine/lambda_double.h                   |  8 +++++++-
+ symengine/llvm_double.cpp                   |  6 ++++++
+ symengine/llvm_double.h                     |  1 +
+ symengine/tests/eval/test_lambda_double.cpp | 17 +++++++++++++++++
+ 4 files changed, 31 insertions(+), 1 deletion(-)
+
+diff --git a/libsymengine/symengine/lambda_double.h b/libsymengine/symengine/lambda_double.h
+index 6442770eb..bf6f00dea 100644
+--- a/libsymengine/symengine/lambda_double.h
++++ b/libsymengine/symengine/lambda_double.h
+@@ -560,7 +560,13 @@ public:
+                 "LambdaDouble can only represent real valued infinity");
+         }
+     }
+-
++    void bvisit(const NaN &nan)
++    {
++        assert(&nan == &(*Nan) /* singleton, or do we support NaN quiet/singaling nan with payload? */);
++        result_ = [](const double * /* x  */) {
++            return std::numeric_limits<double>::signaling_NaN();
++        };
++    }
+     void bvisit(const Contains &cts)
+     {
+         const auto fn_expr = apply(*cts.get_expr());
+diff --git a/libsymengine/symengine/llvm_double.cpp b/libsymengine/symengine/llvm_double.cpp
+index f7d5ea413..f8e02631d 100644
+--- a/libsymengine/symengine/llvm_double.cpp
++++ b/libsymengine/symengine/llvm_double.cpp
+@@ -697,6 +697,12 @@ void LLVMVisitor::bvisit(const Infty &x)
+     }
+ }
+ 
++void LLVMVisitor::bvisit(const NaN &x)
++{
++    result_ = llvm::ConstantFP::getSNaN(get_float_type(&mod->getContext()),
++                                        /*negative=*/false, /*payload=*/0);
++}
++
+ void LLVMVisitor::bvisit(const BooleanAtom &x)
+ {
+     const bool val = x.get_val();
+diff --git a/libsymengine/symengine/llvm_double.h b/libsymengine/symengine/llvm_double.h
+index ee33b18c5..6ce4b9e57 100644
+--- a/libsymengine/symengine/llvm_double.h
++++ b/libsymengine/symengine/llvm_double.h
+@@ -99,6 +99,7 @@ public:
+     void bvisit(const Min &x);
+     void bvisit(const Contains &x);
+     void bvisit(const Infty &x);
++    void bvisit(const NaN &x);
+     void bvisit(const Floor &x);
+     void bvisit(const Ceiling &x);
+     void bvisit(const Truncate &x);
+diff --git a/libsymengine/symengine/tests/eval/test_lambda_double.cpp b/libsymengine/symengine/tests/eval/test_lambda_double.cpp
+index a02553de0..4389169a4 100644
+--- a/libsymengine/symengine/tests/eval/test_lambda_double.cpp
++++ b/libsymengine/symengine/tests/eval/test_lambda_double.cpp
+@@ -1,4 +1,6 @@
+ #include "catch.hpp"
++#include "symengine/constants.h"
++#include "symengine/nan.h"
+ #include <chrono>
+ #include <array>
+ 
+@@ -49,6 +51,7 @@ using SymEngine::Eq;
+ using SymEngine::evalf;
+ using SymEngine::floor;
+ using SymEngine::gamma;
++using SymEngine::Inf;
+ using SymEngine::integer;
+ using SymEngine::LambdaComplexDoubleVisitor;
+ using SymEngine::LambdaRealDoubleVisitor;
+@@ -61,6 +64,7 @@ using SymEngine::map_basic_basic;
+ using SymEngine::max;
+ using SymEngine::min;
+ using SymEngine::mul;
++using SymEngine::Nan;
+ using SymEngine::Ne;
+ using SymEngine::NegInf;
+ using SymEngine::NotImplementedError;
+@@ -274,6 +278,12 @@ TEST_CASE("Evaluate functions", "[lambda_gamma]")
+             REQUIRE(::fabs(d - ref) < 1e-12);
+         }
+     }
++    v.init({}, *Nan);
++    REQUIRE(std::isnan(v.call({})));
++    v.init({}, *Inf);
++    std::isinf(v.call({}));
++    v.init({}, *NegInf);
++    REQUIRE(std::isinf(v.call({})));
+ }
+ 
+ #ifdef HAVE_SYMENGINE_LLVM
+@@ -334,6 +344,13 @@ TEST_CASE("Check llvm and lambda are equal", "[llvm_double]")
+         REQUIRE(::fabs((d - d2)) < 1e-12);
+         REQUIRE(::fabs((d - d3)) < 1e-12);
+     }
++    {
++        double out[2];
++        LLVMDoubleVisitor v;
++        v.init({}, {*Nan, *Inf});
++        v.call(out, {}) REQUIRE(std::isnan(out[0]));
++        REQUIRE(std::isinf(out[1]));
++    }
+ }
+ 
+ TEST_CASE("Check llvm with opt_level 0-3 is equal to llvm without opt_level",
+-- 
+2.47.0

@@ -1,0 +1,10 @@
+diff --git a/requirements.txt b/requirements.txt
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -1,4 +2,4 @@
+ # Example requirement, can be anything that pip knows
+ # install with `pip install -r requirements.txt`, and make sure that CI does the same
+ torch >= 2.4
+-numpy
++numpy < 2.0.0
++einops

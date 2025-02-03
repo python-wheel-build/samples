@@ -1,0 +1,10 @@
+diff --git a/third_party/triton/CMakeLists.txt b/third_party/triton/CMakeLists.txt
+index 55a5d8b3b727..c302661cc84d 100644
+--- a/third_party/triton/CMakeLists.txt
++++ b/third_party/triton/CMakeLists.txt
+@@ -309,5 +309,3 @@ if (${CODEGEN_BACKENDS_LEN} GREATER 0)
+ endif()
+ 
+ add_subdirectory(test)
+-
+-add_subdirectory(unittest)
