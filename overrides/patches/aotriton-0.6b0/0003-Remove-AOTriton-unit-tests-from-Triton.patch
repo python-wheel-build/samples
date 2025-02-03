@@ -1,0 +1,22 @@
+From 8f23770b6cb93357e13240e9a16194631fdef455 Mon Sep 17 00:00:00 2001
+From: Joseph Groenenboom <jgroenen@redhat.com>
+Date: Mon, 30 Sep 2024 14:57:01 -0400
+Subject: [PATCH 2/2] Remove AOTriton unit tests from Triton
+
+---
+ CMakeLists.txt | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/third_party/triton/CMakeLists.txt b/third_party/triton/CMakeLists.txt
+index 55a5d8b3b..c302661cc 100644
+--- a/third_party/triton/CMakeLists.txt
++++ b/third_party/triton/CMakeLists.txt
+@@ -309,5 +309,3 @@ if (${CODEGEN_BACKENDS_LEN} GREATER 0)
+ endif()
+ 
+ add_subdirectory(test)
+-
+-add_subdirectory(unittest)
+-- 
+2.43.5
+

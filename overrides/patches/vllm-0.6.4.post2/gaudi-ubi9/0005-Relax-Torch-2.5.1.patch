@@ -1,0 +1,47 @@
+diff --git a/pyproject.toml b/pyproject.toml
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -5,7 +5,7 @@
+     "packaging",
+     "setuptools>=61",
+     "setuptools-scm>=8.0",
+-    "torch == 2.5.1",
++    "torch == 2.5.1a0+git6fc067b",
+     "wheel",
+     "jinja2",
+ ]
+diff --git a/requirements-build.txt b/requirements-build.txt
+--- a/requirements-build.txt
++++ b/requirements-build.txt
+@@ -3,6 +3,6 @@
+ packaging
+ setuptools>=61
+ setuptools-scm>=8
+-torch==2.5.1
++torch~=2.5.1a0+git6fc067b
+ wheel
+ jinja2
+diff --git a/requirements-test.in b/requirements-test.in
+--- a/requirements-test.in
++++ b/requirements-test.in
+@@ -16,7 +16,7 @@
+ sentence-transformers # required for embedding tests
+ soundfile # required for audio tests
+ timm # required for internvl test
+-torch==2.5.1
++torch~=2.5.1a0+git6fc067b
+ transformers_stream_generator # required for qwen-vl test
+ matplotlib # required for qwen-vl test
+ mistral_common[opencv] >= 1.4.4 # required for pixtral test
+diff --git a/requirements-test.txt b/requirements-test.txt
+--- a/requirements-test.txt
++++ b/requirements-test.txt
+@@ -522,7 +522,7 @@
+     # via
+     #   black
+     #   pytest
+-torch==2.5.1
++torch==2.5.1a0+git6fc067b
+     # via
+     #   -r requirements-test.in
+     #   accelerate

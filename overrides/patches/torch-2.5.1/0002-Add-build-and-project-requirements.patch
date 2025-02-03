@@ -1,0 +1,11 @@
+diff --git a/requirements.txt b/requirements.txt
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -22,3 +22,7 @@
+ ninja
+ packaging
+ optree>=0.12.0 ; python_version <= "3.12"
++iniconfig
++pluggy
++pybind11
++triton

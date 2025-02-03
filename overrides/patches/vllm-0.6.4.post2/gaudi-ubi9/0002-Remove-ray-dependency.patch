@@ -1,0 +1,58 @@
+diff --git a/requirements-cuda.txt b/requirements-cuda.txt
+--- a/requirements-cuda.txt
++++ b/requirements-cuda.txt
+@@ -2,7 +2,6 @@
+ -r requirements-common.txt
+ 
+ # Dependencies for NVIDIA GPUs
+-ray >= 2.9
+ nvidia-ml-py >= 12.560.30 # for pynvml package
+ torch == 2.5.1
+ # These must be updated alongside torch
+diff --git a/requirements-hpu.txt b/requirements-hpu.txt
+--- a/requirements-hpu.txt
++++ b/requirements-hpu.txt
+@@ -2,7 +2,6 @@
+ -r requirements-common.txt
+ 
+ # Dependencies for HPU code
+-ray
+ triton
+ pandas
+ tabulate
+diff --git a/requirements-rocm.txt b/requirements-rocm.txt
+--- a/requirements-rocm.txt
++++ b/requirements-rocm.txt
+@@ -5,7 +5,6 @@
+ awscli
+ boto3
+ botocore
+-ray >= 2.10.0
+ peft
+ pytest-asyncio
+-tensorizer>=2.9.0
+\ No newline at end of file
++tensorizer>=2.9.0
+diff --git a/requirements-test.in b/requirements-test.in
+--- a/requirements-test.in
++++ b/requirements-test.in
+@@ -13,7 +13,6 @@
+ httpx
+ librosa # required for audio tests
+ peft
+-ray[adag]==2.35
+ sentence-transformers # required for embedding tests
+ soundfile # required for audio tests
+ timm # required for internvl test
+diff --git a/requirements-test.txt b/requirements-test.txt
+--- a/requirements-test.txt
++++ b/requirements-test.txt
+@@ -420,8 +420,6 @@
+     #   ray
+     #   timm
+     #   transformers
+-ray[adag]==2.35.0
+-    # via -r requirements-test.in
+ redis==5.2.0
+     # via tensorizer
+ referencing==0.35.1

@@ -1,0 +1,41 @@
+From 872a87752a21261358847c77ac30c633902704b5 Mon Sep 17 00:00:00 2001
+From: Joseph Groenenboom <jgroenen@redhat.com>
+Date: Tue, 15 Oct 2024 00:51:37 -0400
+Subject: [PATCH 3/4] Remove Ray for ROCm and testing
+
+Unsused for ROCm target.
+---
+ requirements-rocm.txt | 3 +--
+ requirements-test.txt | 1 -
+ 2 files changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/requirements-rocm.txt b/requirements-rocm.txt
+index 9e3c4a86..cb613264 100644
+--- a/requirements-rocm.txt
++++ b/requirements-rocm.txt
+@@ -5,8 +5,7 @@
+ awscli
+ boto3
+ botocore
+-ray >= 2.10.0
+ peft
+ pytest-asyncio
+ tensorizer>=2.9.0
+-setuptools-scm>=8
+\ No newline at end of file
++setuptools-scm>=8
+diff --git a/requirements-test.txt b/requirements-test.txt
+index 9c6fadb8..06b70731 100644
+--- a/requirements-test.txt
++++ b/requirements-test.txt
+@@ -14,7 +14,6 @@ librosa # required for audio test
+ opencv-python # required for video test
+ peft
+ requests
+-ray[adag]==2.35
+ sentence-transformers # required for embedding
+ soundfile # required for audio test
+ compressed-tensors==0.4.0 # required for compressed-tensors
+-- 
+2.43.5
+

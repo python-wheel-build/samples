@@ -1,0 +1,66 @@
+From 6fb440ca90ae4a8dd71dc9d0965baa5372671151 Mon Sep 17 00:00:00 2001
+From: Joseph Groenenboom <jgroenen@redhat.com>
+Date: Tue, 15 Oct 2024 00:42:28 -0400
+Subject: [PATCH 2/4] Bump PyTorch commit for all targets
+
+Bump commit to match Torch level for all supported InstructLab targets, up to Torch 2.4.1.
+---
+ pyproject.toml         | 2 +-
+ requirements-build.txt | 2 +-
+ requirements-cpu.txt   | 2 +-
+ requirements-cuda.txt  | 4 ++--
+ 4 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/pyproject.toml b/pyproject.toml
+index a6b3026e..f46cdc8e 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -5,7 +5,7 @@ requires = [
+     "packaging",
+     "setuptools>=61",
+     "setuptools-scm>=8.0",
+-    "torch == 2.4.0",
++    "torch == 2.4.1",
+     "wheel",
+     "jinja2",
+ ]
+diff --git a/requirements-build.txt b/requirements-build.txt
+index 75e5fde3..0f266a5a 100644
+--- a/requirements-build.txt
++++ b/requirements-build.txt
+@@ -3,6 +3,6 @@ ninja
+ packaging
+ setuptools>=61
+ setuptools-scm>=8
+-torch==2.4.0
++torch==2.4.1
+ wheel
+ jinja2
+diff --git a/requirements-cpu.txt b/requirements-cpu.txt
+index 27ca8ca5..61755e38 100644
+--- a/requirements-cpu.txt
++++ b/requirements-cpu.txt
+@@ -2,5 +2,5 @@
+ -r requirements-common.txt
+ 
+ # Dependencies for x86_64 CPUs
+-torch == 2.4.0+cpu; platform_machine != "ppc64le"
++torch == 2.4.1+cpu; platform_machine != "ppc64le"
+ torchvision; platform_machine != "ppc64le"   # required for the image processor of phi3v, this must be updated alongside torch
+diff --git a/requirements-cuda.txt b/requirements-cuda.txt
+index 3b3c2f87..9b31f4d0 100644
+--- a/requirements-cuda.txt
++++ b/requirements-cuda.txt
+@@ -4,7 +4,7 @@
+ # Dependencies for NVIDIA GPUs
+ ray >= 2.9
+ nvidia-ml-py # for pynvml package
+-torch == 2.4.0
++torch == 2.4.1
+ # These must be updated alongside torch
+ torchvision == 0.19   # Required for phi3v processor. See https://github.com/pytorch/vision?tab=readme-ov-file#installation for corresponding version
+-xformers == 0.0.27.post2; platform_system == 'Linux' and platform_machine == 'x86_64'  # Requires PyTorch 2.4.0
++xformers == 0.0.27.post2; platform_system == 'Linux' and platform_machine == 'x86_64'  # Requires PyTorch 2.4.1
+-- 
+2.43.5
+

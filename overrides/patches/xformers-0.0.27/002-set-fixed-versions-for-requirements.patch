@@ -1,0 +1,8 @@
+--- xformers-0.0.27.orig/requirements.txt	2024-07-22 10:55:17.999486569 -0400
++++ xformers-0.0.27/requirements.txt	2024-07-22 10:58:08.753024616 -0400
+@@ -1,4 +1,4 @@
+ # Example requirement, can be anything that pip knows
+ # install with `pip install -r requirements.txt`, and make sure that CI does the same
+ torch >= 2.2
+-numpy
++numpy < 2.0

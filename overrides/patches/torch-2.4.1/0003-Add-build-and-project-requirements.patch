@@ -1,0 +1,40 @@
+From 5040e19a881fa327f6ab2741b96cba8235d00254 Mon Sep 17 00:00:00 2001
+From: Joseph Groenenboom <jgroenen@redhat.com>
+Date: Thu, 26 Sep 2024 14:20:00 -0400
+Subject: [PATCH 3/3] Add build and project requirements.
+
+---
+ pyproject.toml   | 5 +++++
+ requirements.txt | 3 +++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/pyproject.toml b/pyproject.toml
+index 24a917b808..07d42be8ad 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -9,6 +9,11 @@ requires = [
+     "cmake",
+     "typing-extensions",
+     "requests",
++    "filelock",
++    "iniconfig",
++    "packaging",
++    "pluggy",
++    "pybind11",
+ ]
+ # Use legacy backend to import local packages in setup.py
+ build-backend = "setuptools.build_meta:__legacy__"
+diff --git a/requirements.txt b/requirements.txt
+index cc1616a1d9..14c9ca6a71 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -20,3 +20,6 @@ ninja
+ setuptools ; python_version >= "3.12"
+ packaging
+ optree>=0.11.0
++iniconfig
++pluggy
++pybind11
+-- 
+2.43.5
+

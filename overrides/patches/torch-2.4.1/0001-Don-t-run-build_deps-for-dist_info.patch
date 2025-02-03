@@ -1,0 +1,38 @@
+From ccadfd0062131cd0806418eff7aeb77759b0f285 Mon Sep 17 00:00:00 2001
+From: Joseph Groenenboom <jgroenen@redhat.com>
+Date: Thu, 26 Sep 2024 14:03:40 -0400
+Subject: [PATCH 1/3] Don't run build_deps() for dist_info
+
+Doesn't appear to be necessary, and was failing.
+
+Failure was:
+
+```
+$ python setup.py dist_info
+Building wheel torch-2.3.0
+WARNING setuptools_scm._integration.setuptools pyproject.toml does not contain a tool.setuptools_scm section
+-- Building version 2.3.0
+cmake3 --build . --target install --config Release
+No such file or directory
+CMake Error: Generator: execution of make failed. Make command was: /tmp/pip-build-env-cf5cyj9m/overlay/bin/ninja install &&
+```
+---
+ setup.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/setup.py b/setup.py
+index 499e0b06ef..2397d19e38 100644
+--- a/setup.py
++++ b/setup.py
+@@ -299,7 +299,7 @@ for i, arg in enumerate(sys.argv):
+         break
+     if arg == "-q" or arg == "--quiet":
+         VERBOSE_SCRIPT = False
+-    if arg in ["clean", "egg_info", "sdist"]:
++    if arg in ["clean", "egg_info", "dist_info", "sdist"]:
+         RUN_BUILD_DEPS = False
+     filtered_args.append(arg)
+ sys.argv = filtered_args
+-- 
+2.43.5
+

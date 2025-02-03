@@ -1,0 +1,10 @@
+--- torch-2.4.1.orig/setup.py	2024-11-07 20:25:28.231973635 -0500
++++ torch-2.4.1/setup.py	2024-11-07 20:25:48.239158104 -0500
+@@ -1127,6 +1127,7 @@ def main():
+         "networkx",
+         "jinja2",
+         "fsspec",
++        "aotriton",
+     ]
+ 
+     if sys.version_info >= (3, 12, 0):

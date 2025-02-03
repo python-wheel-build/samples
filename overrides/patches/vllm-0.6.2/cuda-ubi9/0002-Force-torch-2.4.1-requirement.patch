@@ -1,0 +1,57 @@
+diff --git a/pyproject.toml b/pyproject.toml
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -5,7 +5,7 @@
+     "packaging",
+     "setuptools>=61",
+     "setuptools-scm>=8.0",
+-    "torch == 2.4.0",
++    "torch == 2.4.1",
+     "wheel",
+     "jinja2",
+ ]
+diff --git a/requirements-build.txt b/requirements-build.txt
+--- a/requirements-build.txt
++++ b/requirements-build.txt
+@@ -3,6 +3,6 @@
+ packaging
+ setuptools>=61
+ setuptools-scm>=8
+-torch==2.4.0
++torch==2.4.1
+ wheel
+ jinja2
+diff --git a/requirements-cpu.txt b/requirements-cpu.txt
+--- a/requirements-cpu.txt
++++ b/requirements-cpu.txt
+@@ -2,5 +2,5 @@
+ -r requirements-common.txt
+ 
+ # Dependencies for x86_64 CPUs
+-torch == 2.4.0+cpu; platform_machine != "ppc64le"
++torch == 2.4.1+cpu; platform_machine != "ppc64le"
+ torchvision; platform_machine != "ppc64le"   # required for the image processor of phi3v, this must be updated alongside torch
+diff --git a/requirements-cuda.txt b/requirements-cuda.txt
+--- a/requirements-cuda.txt
++++ b/requirements-cuda.txt
+@@ -4,7 +4,7 @@
+ # Dependencies for NVIDIA GPUs
+ ray >= 2.9
+ nvidia-ml-py # for pynvml package
+-torch == 2.4.0
++torch == 2.4.1
+ # These must be updated alongside torch
+ torchvision == 0.19   # Required for phi3v processor. See https://github.com/pytorch/vision?tab=readme-ov-file#installation for corresponding version
+ xformers == 0.0.27.post2; platform_system == 'Linux' and platform_machine == 'x86_64'  # Requires PyTorch 2.4.0
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -49,7 +49,7 @@
+ # requirements.txt files and should be kept consistent.  The ROCm torch
+ # versions are derived from Dockerfile.rocm
+ #
+-set(TORCH_SUPPORTED_VERSION_CUDA "2.4.0")
++set(TORCH_SUPPORTED_VERSION_CUDA "2.4.1")
+ set(TORCH_SUPPORTED_VERSION_ROCM "2.5.0")
+ 
+ #

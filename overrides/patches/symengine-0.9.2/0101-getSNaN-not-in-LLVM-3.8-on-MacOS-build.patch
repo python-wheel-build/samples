@@ -1,0 +1,26 @@
+From 3d9432280da203ec572c09033ac4472aa1cdb5f9 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Bj=C3=B6rn=20Ingvar=20Dahlgren?= <bjodah@gmail.com>
+Date: Mon, 21 Feb 2022 22:23:00 +0100
+Subject: [PATCH] getSNaN not in LLVM-3.8 on MacOS build
+
+---
+ symengine/llvm_double.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libsymengine/symengine/llvm_double.cpp b/libsymengine/symengine/llvm_double.cpp
+index f8e02631d..b88414c81 100644
+--- a/libsymengine/symengine/llvm_double.cpp
++++ b/libsymengine/symengine/llvm_double.cpp
+@@ -699,8 +699,8 @@ void LLVMVisitor::bvisit(const Infty &x)
+ 
+ void LLVMVisitor::bvisit(const NaN &x)
+ {
+-    result_ = llvm::ConstantFP::getSNaN(get_float_type(&mod->getContext()),
+-                                        /*negative=*/false, /*payload=*/0);
++    result_ = llvm::ConstantFP::getNaN(get_float_type(&mod->getContext()),
++                                       /*negative=*/false, /*payload=*/0);
+ }
+ 
+ void LLVMVisitor::bvisit(const BooleanAtom &x)
+-- 
+2.47.0

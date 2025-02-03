@@ -1,0 +1,41 @@
+diff --git a/python/triton/backends/compiler.py b/python/triton/backends/compiler.py
+--- a/python/triton/backends/compiler.py
++++ b/python/triton/backends/compiler.py
+@@ -1,5 +1,6 @@
+ import os
+ import re
++import shutil
+ import subprocess
+ 
+ from abc import ABCMeta, abstractmethod, abstractclassmethod
+@@ -27,6 +28,9 @@
+         base_dir = os.path.join(os.path.dirname(__file__), os.pardir)
+         paths = [
+             os.environ.get(f"TRITON_{binary.upper()}_PATH", ""),
++            os.path.join(os.environ.get("CUDA_HOME", "/usr/local/cuda"), "bin", binary),
++            os.path.join(os.environ.get("ROCM_PATH", "/opt/rocm"), "bin", binary),
++            shutil.which(binary) or "",
+             os.path.join(base_dir, "third_party", "cuda", "bin", binary),
+         ]
+         for p in paths:
+diff --git a/third_party/nvidia/backend/compiler.py b/third_party/nvidia/backend/compiler.py
+--- a/third_party/nvidia/backend/compiler.py
++++ b/third_party/nvidia/backend/compiler.py
+@@ -7,6 +7,7 @@
+ import hashlib
+ import re
+ import tempfile
++import shutil
+ import signal
+ import os
+ import subprocess
+@@ -17,6 +18,9 @@
+ def _path_to_binary(binary: str):
+     paths = [
+         os.environ.get(f"TRITON_{binary.upper()}_PATH", ""),
++        os.path.join(os.environ.get("CUDA_HOME", "/usr/local/cuda"), "bin", binary),
++        os.path.join(os.environ.get("ROCM_PATH", "/opt/rocm"), "bin", binary),
++        shutil.which(binary) or "",
+         os.path.join(os.path.dirname(__file__), "bin", binary),
+     ]
+ 

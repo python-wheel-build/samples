@@ -1,0 +1,16 @@
+--- torch-2.4.1.orig/cmake/External/aotriton.cmake	2024-11-12 07:53:24.653033118 -0500
++++ torch-2.4.1/cmake/External/aotriton.cmake	2024-11-12 07:59:59.647472576 -0500
+@@ -5,6 +5,13 @@ if(NOT __AOTRITON_INCLUDED)
+   set(__AOTRITON_INSTALL_DIR "${PROJECT_SOURCE_DIR}/torch")
+   add_library(__caffe2_aotriton INTERFACE)
+   # Note it is INSTALL"ED"
++
++  execute_process(COMMAND python3 -c "import aotriton; import os; prefix, include = os.path.split(aotriton.get_aotriton_include()); print(prefix)"
++                  OUTPUT_VARIABLE __AOTRITON_INSTALLED_PREFIX)
++  string(STRIP ${__AOTRITON_INSTALLED_PREFIX} __AOTRITON_INSTALLED_PREFIX)
++  set(ENV{AOTRITON_INSTALLED_PREFIX} ${__AOTRITON_INSTALLED_PREFIX})
++  message("Setting AOTRITON_INSTALLED_PREFIX to: " $ENV{AOTRITON_INSTALLED_PREFIX})
++
+   if(DEFINED ENV{AOTRITON_INSTALLED_PREFIX})
+     install(DIRECTORY
+             $ENV{AOTRITON_INSTALLED_PREFIX}/lib

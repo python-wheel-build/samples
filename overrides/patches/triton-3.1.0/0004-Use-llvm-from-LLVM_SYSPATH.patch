@@ -1,0 +1,17 @@
+diff --git a/python/setup.py b/python/setup.py
+--- a/python/setup.py
++++ b/python/setup.py
+@@ -159,6 +159,13 @@
+ 
+ # llvm
+ def get_llvm_package_info():
++    llvm_syspath = get_env_with_keys("LLVM_SYSPATH")
++    if llvm_syspath:
++        print(
++            f"User specified LLVM_SYSPATH environment variable. Using pre-compiled LLVM at {llvm_syspath}"
++        )
++        return (Package("llvm", "LLVM-C.lib", "", f"{llvm_syspath}/include", f"{llvm_syspath}/lib", llvm_syspath))
++
+     system = platform.system()
+     try:
+         arch = {"x86_64": "x64", "arm64": "arm64", "aarch64": "arm64"}[platform.machine()]

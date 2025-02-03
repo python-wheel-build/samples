@@ -1,0 +1,136 @@
+From: Fabien Dupont <fdupont@redhat.com>
+Date: Wed, 2 Oct 2024 11:16:41 +0200
+Subject: Make rpdtracer import only when required
+
+Patch to make RPD imports optional
+Original PR: https://github.com/ROCm/vllm/pull/216
+
+Co-authored-by: Rohan Potdar <rohan.potdar@amd.com>
+Signed-off-by: Fabien Dupont <fdupont@redhat.com>
+---
+ benchmarks/profiling/benchmark_latency.py    | 1-,1+
+ benchmarks/profiling/benchmark_throughput.py | 1-,1+
+ vllm/utils.py                                | 10-,24+
+ vllm/worker/worker.py                        | 1-,2+
+ 4 files changed, 13 deletions(-), 28 insertion(+)
+
+diff --git a/benchmarks/profiling/benchmark_latency.py b/benchmarks/profiling/benchmark_latency.py
+--- a/benchmarks/profiling/benchmark_latency.py
++++ b/benchmarks/profiling/benchmark_latency.py
+@@ -9,7 +9,6 @@
+ 
+ import numpy as np
+ import torch
+-from rpdTracerControl import rpdTracerControl as rpd
+ from tqdm import tqdm
+ 
+ from vllm import LLM, SamplingParams
+@@ -24,6 +23,7 @@
+ 
+     @contextmanager
+     def rpd_profiler_context():
++        from rpdTracerControl import rpdTracerControl as rpd
+         llm.start_profile()
+         yield
+         llm.stop_profile()
+diff --git a/benchmarks/profiling/benchmark_throughput.py b/benchmarks/profiling/benchmark_throughput.py
+--- a/benchmarks/profiling/benchmark_throughput.py
++++ b/benchmarks/profiling/benchmark_throughput.py
+@@ -9,7 +9,6 @@
+ 
+ import torch
+ import uvloop
+-from rpdTracerControl import rpdTracerControl as rpd
+ from tqdm import tqdm
+ from transformers import (AutoModelForCausalLM, AutoTokenizer,
+                           PreTrainedTokenizerBase)
+@@ -98,6 +97,7 @@
+ 
+     @contextmanager
+     def rpd_profiler_context():
++        from rpdTracerControl import rpdTracerControl as rpd
+         llm.start_profile()
+         yield
+         llm.stop_profile()
+diff --git a/vllm/utils.py b/vllm/utils.py
+--- a/vllm/utils.py
++++ b/vllm/utils.py
+@@ -31,7 +31,6 @@
+ import torch.types
+ import yaml
+ from packaging.version import Version
+-from rpdTracerControl import rpdTracerControl
+ from typing_extensions import ParamSpec, TypeIs, assert_never
+ 
+ import vllm.envs as envs
+@@ -208,6 +207,7 @@
+ 
+     def initialize_rpd_tracer(self, filename, nvtx):
+         try:
++            from rpdTracerControl import rpdTracerControl
+             rpd_trace.setup_environment_variables(filename)
+             rpdTracerControl.setFilename(name=filename, append=True)
+             return rpdTracerControl(nvtx=nvtx)
+@@ -233,21 +233,35 @@
+             print(f"An error occurred while creating the filename: {e}")
+ 
+ 
++@lru_cache(maxsize=None)
++def is_hipScopedMarker_available():
++
++    try:
++        from hipScopedMarker import hipScopedMarker
++    except ImportError:
++        hipScopedMarker = None
++    return hipScopedMarker is not None
++
++
+ class rpd_mark():
+ 
+     def __init__(self, name=None):
+         self.name = name
+ 
+     def __call__(self, func):
+-        from hipScopedMarker import hipScopedMarker
++        if is_hipScopedMarker_available():
++            from hipScopedMarker import hipScopedMarker
+ 
+-        @wraps(func)
+-        def inner(*args, **kwds):
+-            marker_name = self.name if self.name else f"{func.__name__}"
+-            with hipScopedMarker(f"{marker_name}"):
+-                return func(*args, **kwds)
++            @wraps(func)
++            def inner(*args, **kwds):
++                marker_name = self.name if self.name else f"{func.__name__}"
++                with hipScopedMarker(f"{marker_name}"):
++                    return func(*args, **kwds)
++
++            return inner
+ 
+-        return inner
++        else:
++            return func
+ 
+ 
+ class Device(enum.Enum):
+diff --git a/vllm/worker/worker.py b/vllm/worker/worker.py
+--- a/vllm/worker/worker.py
++++ b/vllm/worker/worker.py
+@@ -24,7 +24,6 @@
+ from vllm.prompt_adapter.request import PromptAdapterRequest
+ from vllm.sequence import (ExecuteModelRequest, IntermediateTensors,
+                            SequenceGroupMetadata, SequenceGroupMetadataDelta)
+-from vllm.utils import rpd_trace
+ from vllm.worker.cache_engine import CacheEngine
+ from vllm.worker.embedding_model_runner import EmbeddingModelRunner
+ from vllm.worker.enc_dec_model_runner import EncoderDecoderModelRunner
+@@ -144,6 +143,8 @@
+             logger.info("Profiling enabled. Traces will be saved to: %s",
+                         rpd_profiler_trace_dir)
+ 
++            from vllm.utils import rpd_trace
++
+             if self.rank == 0:
+                 rpd_trace.create_file(filename=str(rpd_profiler_trace_dir))
+ 

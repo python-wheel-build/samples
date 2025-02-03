@@ -1,0 +1,23 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -125,6 +125,19 @@
+     message(WARNING "Pytorch version ${TORCH_SUPPORTED_VERSION_CUDA} "
+       "expected for CUDA build, saw ${Torch_VERSION} instead.")
+   endif()
++
++  if (DEFINED "$ENV{CAFFE2_USE_CUDNN}")
++    message(STATUS "Environment variable CAFFE2_USE_CUDNN is set to $ENV{CAFFE2_USE_CUDNN}")
++    set(CAFFE2_USE_CUDNN "$ENV{CAFFE2_USE_CUDNN}")
++    if (DEFINED "$ENV{CUDNN_ROOT_DIR}")
++      message(STATUS "Environment variable CUDNN_ROOT_DIR is set to $ENV{CUDNN_ROOT_DIR}")
++      set(CUDNN_ROOT_DIR "$ENV{CUDNN_ROOT_DIR}")
++    endif()
++    if (DEFINED "$ENV{CUSPARSELT_ROOT_DIR}")
++      message(STATUS "Environment variable CUSPARSELT_ROOT_DIR is set to $ENV{CUSPARSELT_ROOT_DIR}")
++      set(CUSPARSELT_ROOT_DIR "$ENV{CUSPARSELT_ROOT_DIR}")
++    endif()
++  endif()
+ elseif(HIP_FOUND)
+   set(VLLM_GPU_LANG "HIP")
+ 
